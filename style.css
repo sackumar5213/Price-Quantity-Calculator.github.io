@@ -1,0 +1,17 @@
+body {
+  background: #f8f9fa;
+}
+.card {
+  border-radius: 12px;
+}
+.result-box {
+  min-height: 80px;
+}
+.unit-badge {
+  cursor: pointer;
+}
+@media (max-width: 576px) {
+  .btn-group .btn {
+    font-size: 14px;
+  }
+}

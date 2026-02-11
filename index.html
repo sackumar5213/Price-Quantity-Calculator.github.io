@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shop Price Calculator</title>
+    <!-- Bootstrap 5 CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+          <div class="card shadow-sm p-3">
+            <h3 class="mb-3 text-center">Shop Price Calculator</h3>
+            <p class="text-center text-muted">
+              Dukaan waalon se bole gaye daam ko daalein — phir aap weight
+              (gm/kg), quantity (piece/dozen) ya rupees dala kar turant nateeja
+              dekhein.
+            </p>
+
+            <!-- Input: Base Price -->
+            <div class="row g-2 align-items-end">
+              <div class="col-md-5">
+                <label class="form-label"
+                  >Base quantity (jaise 1, 12, 250)</label
+                >
+                <input
+                  id="baseQty"
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  class="form-control"
+                  value="1"
+                />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Base unit</label>
+                <select id="baseUnit" class="form-select">
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="piece">piece</option>
+                  <option value="dozen">dozen (12)</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Base price (₹)</label>
+                <input
+                  id="basePrice"
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  class="form-control"
+                  value="100"
+                />
+              </div>
+            </div>
+
+            <hr />
+
+            <!-- Mode selection and desired input -->
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Aap jo nikalna chahte hain:</label>
+                <div class="btn-group w-100" role="group">
+                  <input
+                    type="radio"
+                    class="btn-check"
+                    name="mode"
+                    id="modeQty"
+                    autocomplete="off"
+                    checked
+                  />
+                  <label class="btn btn-outline-primary" for="modeQty"
+                    >Quantity/Weight se Price</label
+                  >
+
+                  <input
+                    type="radio"
+                    class="btn-check"
+                    name="mode"
+                    id="modeMoney"
+                    autocomplete="off"
+                  />
+                  <label class="btn btn-outline-primary" for="modeMoney"
+                    >Paise se Quantity</label
+                  >
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Desired value</label>
+                <div class="input-group">
+                  <input
+                    id="desiredValue"
+                    type="number"
+                    min="0.0001"
+                    step="any"
+                    class="form-control"
+                    placeholder="Amount/Qty"
+                  />
+                  <select
+                    id="desiredUnit"
+                    class="form-select"
+                    style="max-width: 140px"
+                  >
+                    <option value="g">g</option>
+                    <option value="kg">kg</option>
+                    <option value="piece">piece</option>
+                    <option value="dozen">dozen</option>
+                    <option value="rupee">₹ (Rupees)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2">
+              <button id="calcBtn" class="btn btn-success">Calculate</button>
+              <button id="resetBtn" class="btn btn-outline-secondary">
+                Reset
+              </button>
+              <button id="example1" class="btn btn-sm btn-outline-info">
+                Example: 1kg ₹42 → 50g/₹10
+              </button>
+              <button id="example2" class="btn btn-sm btn-outline-info">
+                Example: 12 bananas ₹60 → ₹20
+              </button>
+            </div>
+
+            <hr />
+
+            <div class="result-box p-3 bg-white rounded shadow-sm">
+              <div id="result" class="text-dark"></div>
+              <small id="notes" class="text-muted"></small>
+            </div>
+
+            <hr />
+            <h6>Kaise kaam karta hai (short):</h6>
+            <ul>
+              <li>
+                Base quantity + base unit + base price daaliye (example: 1 kg =
+                ₹42 or 12 piece = ₹60).
+              </li>
+              <li>
+                Phir desired quantity/rupee dijiye (example: 50 g ya ₹10).
+              </li>
+              <li>Calculator convert karke price ya quantity batata hai.</li>
+            </ul>
+
+            <p class="text-center mt-3">
+              <small class="text-muted"
+                >Responsive design — mobile/desktop dono pe chal jayega.</small
+              >
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Helper: convert base to a unit type ("weight" or "count") and normalise to gram or piece
+      function unitCategory(u) {
+        if (u === "kg" || u === "g") return "weight";
+        return "count";
+      }
+      function toGrams(q, u) {
+        if (u === "kg") return q * 1000;
+        if (u === "g") return q;
+        return null;
+      }
+      function toPieces(q, u) {
+        if (u === "piece") return q;
+        if (u === "dozen") return q * 12;
+        return null;
+      }
+
+      function roundSmart(x) {
+        if (!isFinite(x)) return x;
+        if (Math.abs(x) < 0.01) return Number(x.toFixed(4));
+        if (Math.abs(x) < 1) return Number(x.toFixed(3));
+        return Number(x.toFixed(2));
+      }
+
+      function showResult(html, note = "") {
+        document.getElementById("result").innerHTML = html;
+        document.getElementById("notes").textContent = note;
+      }
+
+      function calculate() {
+        const baseQty = parseFloat(document.getElementById("baseQty").value);
+        const baseUnit = document.getElementById("baseUnit").value;
+        const basePrice = parseFloat(
+          document.getElementById("basePrice").value,
+        );
+        const desiredValue = parseFloat(
+          document.getElementById("desiredValue").value,
+        );
+        const desiredUnit = document.getElementById("desiredUnit").value;
+        const modeQty = document.getElementById("modeQty").checked;
+
+        if (
+          isNaN(baseQty) ||
+          baseQty <= 0 ||
+          isNaN(basePrice) ||
+          basePrice <= 0
+        ) {
+          showResult(
+            '<div class="text-danger">Base quantity aur price sahi daalein.</div>',
+          );
+          return;
+        }
+
+        // Determine category
+        const baseCat = unitCategory(baseUnit);
+        const desiredCat = unitCategory(desiredUnit);
+
+        // Compute price per smallest unit: per gram or per piece
+        let pricePerGram = null,
+          pricePerPiece = null;
+        if (baseCat === "weight") {
+          const grams = toGrams(baseQty, baseUnit);
+          pricePerGram = basePrice / grams; // ₹ per gram
+        } else {
+          const pieces = toPieces(baseQty, baseUnit);
+          pricePerPiece = basePrice / pieces; // ₹ per piece
+        }
+
+        // If desiredUnit is rupee => user wants quantity for given rupees
+        if (desiredUnit === "rupee") {
+          if (isNaN(desiredValue) || desiredValue <= 0) {
+            showResult(
+              '<div class="text-danger">Valid rupee amount daaliye.</div>',
+            );
+            return;
+          }
+          if (baseCat === "weight") {
+            const grams = desiredValue / pricePerGram; // grams
+            const kg = grams / 1000;
+            showResult(
+              `<strong>₹ ${roundSmart(desiredValue)} mein aapko:</strong> <br> ${roundSmart(grams)} g (${roundSmart(kg)} kg)`,
+            );
+          } else {
+            const pieces = desiredValue / pricePerPiece;
+            const dozens = pieces / 12;
+            showResult(
+              `<strong>₹ ${roundSmart(desiredValue)} mein aapko:</strong> <br> ${roundSmart(pieces)} piece (${roundSmart(dozens)} dozen)`,
+            );
+          }
+          return;
+        }
+
+        // If desired is weight or piece, compute price
+        if (desiredCat === "weight" && baseCat === "weight") {
+          if (isNaN(desiredValue) || desiredValue <= 0) {
+            showResult(
+              '<div class="text-danger">Valid desired quantity daaliye.</div>',
+            );
+            return;
+          }
+          let desiredGrams = toGrams(desiredValue, desiredUnit);
+          if (desiredGrams === null) {
+            showResult(
+              '<div class="text-danger">Desired unit conversion error.</div>',
+            );
+            return;
+          }
+          const price = desiredGrams * pricePerGram;
+          showResult(
+            `<strong>${desiredValue} ${desiredUnit} ka daam:</strong> ₹ ${roundSmart(price)}`,
+            `Base: ${baseQty} ${baseUnit} = ₹ ${basePrice}. (₹ ${roundSmart(pricePerGram)} per g)`,
+          );
+          return;
+        }
+
+        if (desiredCat === "count" && baseCat === "count") {
+          if (isNaN(desiredValue) || desiredValue <= 0) {
+            showResult(
+              '<div class="text-danger">Valid desired quantity daaliye.</div>',
+            );
+            return;
+          }
+          let desiredPieces = toPieces(desiredValue, desiredUnit);
+          if (desiredPieces === null) {
+            showResult(
+              '<div class="text-danger">Desired unit conversion error.</div>',
+            );
+            return;
+          }
+          const price = desiredPieces * pricePerPiece;
+          showResult(
+            `<strong>${desiredValue} ${desiredUnit} ka daam:</strong> ₹ ${roundSmart(price)}`,
+            `Base: ${baseQty} ${baseUnit} = ₹ ${basePrice}. (₹ ${roundSmart(pricePerPiece)} per piece)`,
+          );
+          return;
+        }
+
+        // Mixed conversions: if base is weight but desired is piece (or vice versa) not possible without density etc.
+        showResult(
+          '<div class="text-warning">Base unit aur desired unit alag prakaar ke hain (weight vs count). Is conversion ke liye extra info chahiye (jaise 1 piece ka wajan).</div>',
+        );
+      }
+
+      // Event listeners
+      document.getElementById("calcBtn").addEventListener("click", calculate);
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        document.getElementById("baseQty").value = 1;
+        document.getElementById("baseUnit").value = "kg";
+        document.getElementById("basePrice").value = 100;
+        document.getElementById("desiredValue").value = "";
+        document.getElementById("desiredUnit").value = "g";
+        document.getElementById("modeQty").checked = true;
+        showResult("");
+      });
+
+      // Examples
+      document.getElementById("example1").addEventListener("click", () => {
+        // 1 kg = ₹42, check 50g and ₹10
+        document.getElementById("baseQty").value = 1;
+        document.getElementById("baseUnit").value = "kg";
+        document.getElementById("basePrice").value = 42;
+        document.getElementById("desiredValue").value = 50;
+        document.getElementById("desiredUnit").value = "g";
+        calculate();
+      });
+
+      document.getElementById("example2").addEventListener("click", () => {
+        // 12 banana = ₹60 -> how many for ₹20
+        document.getElementById("baseQty").value = 12;
+        document.getElementById("baseUnit").value = "dozen";
+        document.getElementById("basePrice").value = 60;
+        document.getElementById("desiredValue").value = 20;
+        document.getElementById("desiredUnit").value = "rupee";
+        calculate();
+      });
+
+      // Allow pressing Enter in desiredValue to calculate
+      document
+        .getElementById("desiredValue")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") calculate();
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
